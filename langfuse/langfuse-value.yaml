@@ -1,0 +1,59 @@
+# Optional, but highly recommended. Generate via `openssl rand -hex 32`.
+#  langfuse:
+#    encryptionKey:
+#      value: ""
+langfuse: 
+  salt:
+    value: secureSalt
+  nextauth:
+    secret:
+      value: "123123"
+      
+  ingress:
+    enabled: true
+    className: "alb"
+    annotations:
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}, {"HTTP":80}]'
+      # alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-northeast-2:170698194833:certificate/bc4838d8-4f0c-4a53-8acd-2f5257367960
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/success-codes: 200-399
+      alb.ingress.kubernetes.io/target-type: ip
+      alb.ingress.kubernetes.io/actions.redirect-to-langfuse: |
+        {
+          "type": "redirect",
+          "redirectConfig": {
+            "protocol": "HTTPS",
+            "port": "443",
+            "host": "langfuse.daniel0324.click",
+            "statusCode": "HTTP_301"
+          }
+        }
+    hosts:
+      # Main service host - uses default backend
+      - host: langfuse.daniel0324.click
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+              service:
+                name: langfuse-web
+                port:
+                  number: 3000
+
+postgresql:
+  auth:
+    # If you want to use `postgres` as the username, you need to provide postgresPassword instead of password.
+    username: langfuse
+    password: "123123"
+
+clickhouse:
+  auth:
+    password: "123123"
+
+redis:
+  auth:
+    password: "123123"
+
+s3:
+  auth:
+    rootPassword: "123123a!"

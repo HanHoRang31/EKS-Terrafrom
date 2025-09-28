@@ -1,0 +1,44 @@
+prometheus:
+  prometheusSpec:
+    retention: 5h
+    scrapeInterval: 30s
+    evaluationInterval: 30s
+    scrapeTimeout: 10s
+    serviceMonitorSelectorNilUsesHelmValues: false # This is required to use the serviceMonitorSelector
+    storageSpec:
+      volumeClaimTemplate:
+        metadata:
+          name: data
+        spec:
+          storageClassName: ${storage_class_type}
+          accessModes:
+          - ReadWriteOnce
+          resources:
+            requests:
+              storage: 50Gi
+alertmanager:
+  enabled: false
+
+grafana:
+  defaultDashboardsTimezone: Asia/Seoul
+  adminPassword: admin1234
+  defaultDashboardsEnabled: true
+
+receivers:
+  - name: 'robusta'
+    webhook_configs:
+      - url: 'http://robusta-runner.default.svc.cluster.local/api/alerts'
+        send_resolved: true # 
+  - name: 'default-receiver'
+
+route: # 
+  routes:
+    - receiver: 'robusta'
+      group_by: [ '...' ]
+      group_wait: 1s
+      group_interval: 1s
+      matchers:
+        - severity =~ ".*"
+      repeat_interval: 4h
+      continue: true # 
+  receiver: 'default-receiver'
